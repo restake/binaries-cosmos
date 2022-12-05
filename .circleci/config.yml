@@ -1,0 +1,69 @@
+version: 2.1
+
+orbs:
+  go: "circleci/go@1.7.1"
+  rust: "circleci/rust@1.6.0"
+
+parameters:
+  version:
+    type: "string"
+    default: "v0.12.2"
+  run:
+    type: "boolean"
+    default: false
+
+workflows:
+  tmkms:
+    when: << pipeline.parameters.run >>
+    jobs:
+      - build
+      - publish:
+          context: "github-context"
+          requires:
+            - build
+
+jobs:
+  build:
+    executor:
+      name: "rust/default"
+      tag: "1.65.0"
+    steps:
+      - run:
+          name: "Clone Tendermint KMS"
+          command: git clone -b << pipeline.parameters.version >> https://github.com/iqlusioninc/tmkms.git tmkms
+      - restore_cache:
+          keys:
+            - 'cargo-{{ checksum "tmkms/Cargo.lock" }}'
+      - run:
+          name: "Build Tendermint KMS binary"
+          command: |
+            cd tmkms
+            cargo build --release --features=softsign
+            mv "${HOME}/project/tmkms/target/release/tmkms" "${HOME}/project/tmkms/target/release/tmkms-softsign-<< pipeline.parameters.version >>"
+      - save_cache:
+          key: 'cargo-{{ checksum "tmkms/Cargo.lock" }}'
+          paths:
+            - ~/.cargo
+      - persist_to_workspace:
+          root: "./tmkms/target/release"
+          paths:
+            - tmkms*
+  publish:
+    executor:
+      name: "go/default"
+      tag: "1.17"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '/tmp/binaries'
+      - run:
+          name: "Install GHR"
+          command: go get github.com/tcnksm/ghr
+      - run:
+          name: "Publish Github release"
+          command: |
+            ghr -t "${GITHUB_TOKEN}" \
+              -n "Manual Release - Build #${CIRCLE_BUILD_NUM}" \
+              -b "This is a manually triggered build of Tendermint KMS << pipeline.parameters.version >>" \
+              -recreate "build/circleci-${CIRCLE_BUILD_NUM}" \
+              /tmp/binaries/tmkms-softsign-<< pipeline.parameters.version >>
