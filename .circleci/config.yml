@@ -63,7 +63,7 @@ jobs:
           name: "Publish Github release"
           command: |
             ghr -t "${GITHUB_TOKEN}" \
-              -n "Manual Release - Build #${CIRCLE_BUILD_NUM}" \
+              -n "Build #${CIRCLE_BUILD_NUM}" \
               -b "This is a manually triggered build of Tendermint KMS << pipeline.parameters.version >>" \
               -recreate "build/circleci-${CIRCLE_BUILD_NUM}" \
               /tmp/binaries/tmkms-softsign-<< pipeline.parameters.version >>
