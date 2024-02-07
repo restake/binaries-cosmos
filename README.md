@@ -14,4 +14,4 @@ Supported feature builds:
 - [ ] `tx-signer`
 - [ ] `yubihsm-mock`
 - [ ] `yubihsm-server`
-- [ ] `fortanixdsm`
+- [x] `fortanixdsm`
