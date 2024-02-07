@@ -7,7 +7,7 @@ orbs:
 parameters:
   version:
     type: "string"
-    default: "v0.12.2"
+    default: "v0.13.1"
   run:
     type: "boolean"
     default: false
@@ -38,7 +38,7 @@ jobs:
           name: "Build Tendermint KMS binary"
           command: |
             cd tmkms
-            cargo build --release --features=softsign
+            cargo build --release --features=softsign,fortanixdsm
             mv "${HOME}/project/tmkms/target/release/tmkms" "${HOME}/project/tmkms/target/release/tmkms-softsign-<< pipeline.parameters.version >>"
       - save_cache:
           key: 'cargo-{{ checksum "tmkms/Cargo.lock" }}'
